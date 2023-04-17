@@ -1,0 +1,39 @@
+name: Build Release
+
+on: push
+
+jobs:
+  build_docker:
+    name: Build docker images
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout 
+      uses: actions/checkout@v3
+      with:
+        submodules: "true"
+
+    - name: Setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.13
+      with:
+        cmake-version: '3.22.x'
+
+    - name: Build libllama.so
+      working-directory: ./vendor/llama.cpp
+      run: |
+        mkdir build
+        cd build
+        cmake .. -D LLAMA_STANDALONE=OFF -D LLAMA_AVX512=OFF -D BUILD_SHARED_LIBS=ON -D LLAMA_BUILD_TESTS=OFF -D LLAMA_BUILD_EXAMPLES=OFF
+        cmake --build . --config Release
+
+    - name: Copy libllama.so to lib folder and rename
+      run: |
+        mkdir lib
+        cp ./vendor/llama.cpp/build/libllama.so ./lib/llama.so
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: libllama
+        path: ./lib/
+
+    
